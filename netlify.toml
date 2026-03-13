@@ -1,0 +1,13 @@
+[build]
+  publish = "."
+  edge_functions = "netlify/edge-functions"
+
+[[edge_functions]]
+  path = "/"
+  function = "inject-key"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
