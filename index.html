@@ -1,0 +1,1228 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ComplianceAI — ESG-Berichte für KMUs</title>
+<meta name="description" content="ESG-Nachhaltigkeitsbericht in 30 Minuten. KI-gestützt, CSRD-orientiert, ab 199€/Jahr.">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root {
+  --bg: #0c110d;
+  --surface: #111810;
+  --card: #161e17;
+  --card2: #1b241c;
+  --border: rgba(255,255,255,0.06);
+  --border2: rgba(255,255,255,0.11);
+  --green: #3d9962;
+  --green-l: #52b87a;
+  --green-d: rgba(61,153,98,0.14);
+  --green-d2: rgba(61,153,98,0.07);
+  --gold: #c8a04e;
+  --blue: #5b8fc4;
+  --danger: #d95555;
+  --warn: #d4813a;
+  --text: #dde8de;
+  --muted: #6e8572;
+  --white: #ecf2ed;
+  --serif: 'Playfair Display', Georgia, serif;
+  --sans: 'DM Sans', system-ui, sans-serif;
+  --r: 10px;
+  --shadow: 0 4px 24px rgba(0,0,0,.35);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;-webkit-font-smoothing:antialiased;}
+
+/* ── SCREENS ── */
+.screen{display:none;min-height:100vh;}
+.screen.active{display:flex;}
+
+/* ── AUTH ── */
+#auth-screen{align-items:center;justify-content:center;position:relative;overflow:hidden;background:radial-gradient(ellipse 80% 60% at 50% -10%, rgba(61,153,98,.1) 0%,transparent 60%);}
+.auth-noise{position:absolute;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.04'/%3E%3C/svg%3E");pointer-events:none;opacity:.4;}
+.auth-box{position:relative;z-index:1;width:100%;max-width:400px;padding:48px 44px;animation:fadeUp .45s ease both;}
+.auth-logo{font-family:var(--serif);font-size:22px;color:var(--green-l);display:flex;align-items:center;gap:9px;margin-bottom:40px;font-style:italic;}
+.auth-logo-dot{width:7px;height:7px;background:var(--green);border-radius:50%;flex-shrink:0;animation:pulse 2.4s ease infinite;}
+@keyframes pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.3);opacity:.6}}
+.auth-title{font-family:var(--serif);font-size:34px;color:var(--white);margin-bottom:6px;line-height:1.15;font-weight:700;}
+.auth-sub{font-size:13.5px;color:var(--muted);margin-bottom:34px;line-height:1.65;}
+.auth-tabs{display:flex;border:1px solid var(--border2);border-radius:8px;margin-bottom:28px;overflow:hidden;}
+.auth-tab{flex:1;padding:10px;text-align:center;font-size:13px;font-weight:500;cursor:pointer;color:var(--muted);transition:all .18s;background:transparent;border:none;font-family:var(--sans);}
+.auth-tab.on{background:var(--green);color:#fff;}
+.field{margin-bottom:15px;}
+.field label{display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.9px;color:var(--muted);margin-bottom:7px;}
+.field input{width:100%;padding:12px 15px;background:var(--card);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-size:14px;font-family:var(--sans);outline:none;transition:border .18s;}
+.field input:focus{border-color:var(--green);}
+.field input::placeholder{color:var(--muted);}
+.btn-full{width:100%;padding:13px;background:var(--green);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--sans);transition:all .18s;margin-top:6px;letter-spacing:.2px;}
+.btn-full:hover{background:var(--green-l);transform:translateY(-1px);}
+.auth-note{text-align:center;margin-top:18px;font-size:12px;color:var(--muted);}
+
+/* ── PAYWALL ── */
+#paywall-screen{align-items:flex-start;justify-content:center;padding:48px 20px;background:var(--bg);}
+.paywall-inner{max-width:880px;width:100%;}
+.paywall-header{text-align:center;margin-bottom:44px;}
+.paywall-title{font-family:var(--serif);font-size:44px;margin-bottom:10px;color:var(--white);}
+.paywall-sub{font-size:15px;color:var(--muted);max-width:460px;margin:0 auto;line-height:1.7;}
+.pw-toggle{display:inline-flex;border:1px solid var(--border2);border-radius:8px;overflow:hidden;margin-bottom:36px;}
+.pw-tog{padding:9px 20px;font-size:13px;font-weight:500;cursor:pointer;transition:all .18s;border:none;font-family:var(--sans);color:var(--muted);background:transparent;}
+.plans{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;}
+.plan{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:30px;position:relative;transition:all .2s;}
+.plan:hover{border-color:var(--border2);transform:translateY(-3px);}
+.plan.popular{border-color:var(--green);box-shadow:0 0 44px rgba(61,153,98,.15);}
+.plan-badge{position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:var(--green);color:#fff;font-size:10.5px;font-weight:700;padding:4px 13px;border-radius:20px;white-space:nowrap;letter-spacing:.3px;}
+.plan-name{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.1px;color:var(--muted);margin-bottom:13px;}
+.plan-price{font-family:var(--serif);font-size:50px;color:var(--white);line-height:1;}
+.plan-period{font-size:12.5px;color:var(--muted);margin-bottom:22px;margin-top:4px;}
+.plan-features{list-style:none;display:flex;flex-direction:column;gap:9px;margin-bottom:26px;}
+.plan-features li{font-size:12.5px;display:flex;align-items:flex-start;gap:8px;color:#9db8a3;line-height:1.4;}
+.plan-features .ck{color:var(--green);font-size:14px;flex-shrink:0;}
+.plan-btn{width:100%;padding:11px;border-radius:8px;font-size:13.5px;font-weight:600;cursor:pointer;border:1px solid var(--green);background:transparent;color:var(--green);font-family:var(--sans);transition:all .18s;}
+.plan-btn:hover,.plan.popular .plan-btn{background:var(--green);color:#fff;}
+.paywall-skip{text-align:center;margin-top:22px;font-size:13px;color:var(--muted);}
+.paywall-skip span{color:var(--green);cursor:pointer;text-decoration:underline;}
+
+/* ── APP SHELL ── */
+#app-screen{flex-direction:column;background:var(--bg);}
+.topnav{height:54px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;flex-shrink:0;position:sticky;top:0;z-index:50;}
+.topnav-logo{font-family:var(--serif);font-size:19px;color:var(--green-l);display:flex;align-items:center;gap:8px;font-style:italic;font-weight:600;}
+.topnav-logo .dot{width:6px;height:6px;background:var(--green);border-radius:50%;flex-shrink:0;}
+.topnav-right{display:flex;align-items:center;gap:14px;}
+.plan-pill{background:var(--green-d);color:var(--green);font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:20px;text-transform:uppercase;letter-spacing:.5px;}
+.user-av{width:30px;height:30px;border-radius:50%;background:var(--green-d2);border:1.5px solid var(--green);color:var(--green-l);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;cursor:pointer;}
+.user-info{font-size:12px;color:var(--muted);}
+.app-body{display:grid;grid-template-columns:210px 1fr;flex:1;min-height:calc(100vh - 54px);}
+.sidebar{background:var(--surface);border-right:1px solid var(--border);padding:18px 0;display:flex;flex-direction:column;}
+.sidebar-label{font-size:10px;text-transform:uppercase;letter-spacing:1.3px;color:rgba(255,255,255,.2);padding:0 14px;margin:8px 0 5px;font-weight:600;}
+.nav-item{display:flex;align-items:center;gap:9px;padding:9px 14px;margin:1px 8px;border-radius:8px;cursor:pointer;font-size:13px;color:var(--muted);transition:all .14s;font-weight:400;}
+.nav-item:hover{background:var(--green-d2);color:var(--text);}
+.nav-item.active{background:var(--green-d);color:var(--green-l);font-weight:500;}
+.nav-item .icon{font-size:15px;width:18px;text-align:center;}
+.nav-badge{margin-left:auto;background:var(--green);color:#fff;font-size:9.5px;font-weight:700;padding:2px 6px;border-radius:6px;}
+.content{overflow-y:auto;padding:28px;background:var(--bg);}
+
+/* ── VIEWS ── */
+.view{display:none;}
+.view.active{display:block;}
+
+/* ── DASHBOARD ── */
+.dash-welcome{margin-bottom:26px;}
+.dash-welcome h2{font-family:var(--serif);font-size:30px;margin-bottom:3px;color:var(--white);font-weight:700;}
+.dash-welcome p{font-size:13px;color:var(--muted);}
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px;}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:18px;}
+.kpi-label{font-size:10.5px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-bottom:7px;font-weight:600;}
+.kpi-val{font-family:var(--serif);font-size:34px;color:var(--white);line-height:1.05;}
+.kpi-sub{font-size:11.5px;color:var(--green);margin-top:5px;}
+.dash-grid{display:grid;grid-template-columns:1.4fr 1fr;gap:16px;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:22px;}
+.card-title{font-size:13px;font-weight:600;color:var(--white);margin-bottom:18px;display:flex;align-items:center;gap:7px;}
+.prog-item{margin-bottom:13px;}
+.prog-top{display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px;}
+.prog-label{color:var(--muted);}
+.prog-val{color:var(--text);font-weight:600;}
+.prog-track{height:4px;background:rgba(255,255,255,.05);border-radius:2px;overflow:hidden;}
+.prog-fill{height:100%;border-radius:2px;transition:width 1.3s cubic-bezier(.2,0,.2,1);}
+.action-item{display:flex;align-items:flex-start;gap:9px;padding:10px 0;border-bottom:1px solid var(--border);font-size:12.5px;color:#8fa895;line-height:1.5;}
+.action-item:last-child{border-bottom:none;}
+.prio{padding:2px 7px;border-radius:4px;font-size:9.5px;font-weight:700;white-space:nowrap;margin-top:2px;letter-spacing:.2px;}
+.p-h{background:rgba(217,85,85,.14);color:#e07777;}
+.p-m{background:rgba(212,129,58,.14);color:var(--warn);}
+.p-l{background:var(--green-d);color:var(--green-l);}
+.dash-cta{margin-top:16px;display:flex;gap:10px;}
+.btn-green{padding:10px 22px;background:var(--green);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--sans);transition:all .18s;}
+.btn-green:hover{background:var(--green-l);}
+.btn-outline{padding:10px 22px;background:transparent;color:var(--green);border:1px solid var(--green);border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--sans);transition:all .18s;}
+.btn-outline:hover{background:var(--green-d);}
+
+/* ── WIZARD ── */
+.wiz-toprow{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;}
+.wiz-skip{background:none;border:none;color:var(--muted);font-size:12.5px;cursor:pointer;font-family:var(--sans);padding:4px 8px;border-radius:6px;transition:color .14s;}
+.wiz-skip:hover{color:var(--text);}
+.wiz-bottleneck summary::-webkit-details-marker{display:none;}
+.wiz-wrap{max-width:640px;margin:0 auto;}
+.wiz-prog-bar{display:flex;gap:3px;margin-bottom:30px;}
+.wiz-seg{height:3px;flex:1;border-radius:2px;background:var(--border2);transition:background .28s;}
+.wiz-seg.done{background:var(--green);}
+.wiz-seg.cur{background:var(--gold);}
+.wiz-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:36px;box-shadow:0 8px 48px rgba(0,0,0,.3);}
+.wiz-cat{font-size:10.5px;text-transform:uppercase;letter-spacing:1.3px;color:var(--green);font-weight:700;margin-bottom:7px;}
+.wiz-q{font-family:var(--serif);font-size:26px;color:var(--white);margin-bottom:6px;line-height:1.25;font-weight:600;}
+.wiz-hint{font-size:13px;color:var(--muted);margin-bottom:26px;line-height:1.65;}
+.wiz-input{width:100%;padding:12px 15px;background:var(--bg);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-size:14.5px;font-family:var(--sans);outline:none;transition:border .18s;}
+.wiz-input:focus{border-color:var(--green);}
+.wiz-input::placeholder{color:var(--muted);}
+.wiz-select{width:100%;padding:12px 15px;background:var(--bg);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-size:14px;font-family:var(--sans);outline:none;cursor:pointer;-webkit-appearance:none;}
+.wiz-select option{background:var(--bg);}
+.wiz-opts{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
+.wiz-opt{padding:13px 15px;border:1px solid var(--border2);border-radius:8px;cursor:pointer;font-size:13px;color:var(--muted);transition:all .14s;text-align:center;font-family:var(--sans);line-height:1.3;}
+.wiz-opt:hover{border-color:var(--green);color:var(--text);}
+.wiz-opt.sel{border-color:var(--green);background:var(--green-d);color:var(--green-l);font-weight:500;}
+.wiz-range-wrap{display:flex;flex-direction:column;gap:10px;align-items:center;}
+.wiz-range{width:100%;accent-color:var(--green);height:6px;cursor:pointer;}
+.wiz-range-val{font-family:var(--serif);font-size:40px;color:var(--green-l);text-align:center;letter-spacing:-1px;}
+.wiz-nav{display:flex;justify-content:space-between;align-items:center;margin-top:26px;padding-top:20px;border-top:1px solid var(--border);}
+.wiz-back{background:none;border:none;color:var(--muted);font-size:13px;cursor:pointer;font-family:var(--sans);padding:8px 12px;border-radius:7px;transition:all .14s;}
+.wiz-back:hover{color:var(--text);background:var(--green-d2);}
+.wiz-next{padding:11px 28px;background:var(--green);color:#fff;border:none;border-radius:8px;font-size:13.5px;font-weight:600;cursor:pointer;font-family:var(--sans);transition:all .18s;letter-spacing:.2px;}
+.wiz-next:hover{background:var(--green-l);}
+.wiz-ctr{font-size:12px;color:var(--muted);}
+
+/* ── REPORT ── */
+.report-wrap{max-width:800px;}
+.report-actions{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;}
+.report-hero{background:linear-gradient(135deg,#0d1a0f 0%,#152218 100%);border:1px solid var(--border);border-radius:14px;padding:32px;margin-bottom:16px;position:relative;overflow:hidden;}
+.report-hero::before{content:'';position:absolute;top:-60px;right:-60px;width:240px;height:240px;background:radial-gradient(circle,rgba(61,153,98,.1) 0%,transparent 70%);pointer-events:none;}
+.report-co{font-size:11.5px;color:var(--muted);margin-bottom:3px;text-transform:uppercase;letter-spacing:.6px;}
+.report-title-text{font-family:var(--serif);font-size:32px;color:var(--white);margin-bottom:3px;font-weight:700;}
+.report-year{font-size:12px;color:var(--muted);margin-bottom:22px;}
+.score-pills{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
+.score-pill{background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:10px;padding:14px 10px;text-align:center;}
+.sp-label{font-size:9.5px;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);margin-bottom:5px;}
+.sp-val{font-family:var(--serif);font-size:30px;color:var(--white);font-weight:600;line-height:1;}
+.sp-grade{font-size:11px;color:var(--green);margin-top:3px;}
+.report-section{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:22px;margin-bottom:13px;}
+.rs-title{font-size:13.5px;font-weight:600;color:var(--white);margin-bottom:14px;padding-bottom:11px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;}
+.rs-content{font-size:13px;line-height:1.9;color:#9cb5a0;}
+.rs-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;}
+.rs-measure{background:var(--bg);border-radius:8px;padding:13px;border:1px solid var(--border);}
+.rsm-label{font-size:11px;color:var(--muted);margin-bottom:3px;}
+.rsm-val{font-size:19px;font-weight:700;color:var(--green-l);}
+.loader{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:380px;gap:14px;}
+.spinner{width:40px;height:40px;border:2.5px solid var(--border);border-top-color:var(--green);border-radius:50%;animation:spin .65s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loader-text{font-size:14px;color:var(--muted);}
+.loader-steps{display:flex;flex-direction:column;gap:7px;margin-top:10px;}
+.ls{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:8px;opacity:0;transition:opacity .35s;}
+.ls.show{opacity:1;}
+
+/* ── SETTINGS ── */
+.settings-section{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:22px;margin-bottom:14px;}
+.ss-title{font-size:13.5px;font-weight:600;color:var(--white);margin-bottom:15px;padding-bottom:11px;border-bottom:1px solid var(--border);}
+.ss-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);}
+.ss-row:last-child{border-bottom:none;}
+.ss-label{font-size:13px;color:var(--text);}
+.ss-sub{font-size:11px;color:var(--muted);margin-top:2px;}
+.ss-input{padding:8px 12px;background:var(--bg);border:1px solid var(--border2);border-radius:7px;color:var(--text);font-size:13px;font-family:var(--sans);outline:none;width:210px;}
+.ss-input:focus{border-color:var(--green);}
+.ss-badge{background:var(--green-d);color:var(--green-l);font-size:11.5px;font-weight:600;padding:4px 10px;border-radius:6px;}
+.ss-btn{padding:8px 16px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--sans);transition:all .18s;}
+.ss-btn.primary{background:var(--green);color:#fff;border:none;}
+.ss-btn.danger{background:transparent;color:var(--danger);border:1px solid var(--danger);}
+.ss-btn:hover{opacity:.82;}
+
+/* ── MODALS ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;z-index:200;backdrop-filter:blur(6px);}
+.modal{background:var(--card);border:1px solid var(--border2);border-radius:16px;padding:34px;max-width:440px;width:92%;box-shadow:0 28px 80px rgba(0,0,0,.55);}
+.modal h3{font-family:var(--serif);font-size:25px;margin-bottom:7px;color:var(--white);font-weight:600;}
+.modal p{font-size:13px;color:var(--muted);line-height:1.65;margin-bottom:18px;}
+.modal-input{width:100%;padding:11px 15px;background:var(--bg);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-size:14px;font-family:var(--sans);margin-bottom:13px;outline:none;}
+.modal-input:focus{border-color:var(--green);}
+.modal-note{font-size:11px;color:var(--muted);margin-top:9px;}
+.modal-note a{color:var(--green);}
+.stripe-mock{background:var(--bg);border:1px solid var(--border2);border-radius:10px;padding:18px;margin-bottom:14px;}
+.stripe-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
+.stripe-field label{font-size:10px;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);display:block;margin-bottom:5px;}
+.stripe-field input{width:100%;padding:10px 12px;background:var(--surface);border:1px solid var(--border2);border-radius:7px;color:var(--text);font-size:13px;font-family:var(--sans);outline:none;}
+.stripe-field input:focus{border-color:var(--green);}
+.stripe-secure{font-size:11px;color:var(--muted);margin-top:8px;}
+
+/* ── UTILITIES ── */
+@keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+.toast{position:fixed;bottom:22px;right:22px;background:var(--card2);border:1px solid var(--green);color:var(--text);padding:13px 18px;border-radius:10px;font-size:13px;box-shadow:0 8px 32px rgba(0,0,0,.4);z-index:300;animation:slideIn .28s ease both;max-width:340px;line-height:1.45;}
+@keyframes slideIn{from{opacity:0;transform:translateX(28px)}to{opacity:1;transform:translateX(0)}}
+
+/* ── MOBILE ── */
+@media(max-width:700px){
+  .app-body{grid-template-columns:1fr;}
+  .sidebar{display:none;}
+  .kpi-row{grid-template-columns:1fr 1fr;}
+  .dash-grid{grid-template-columns:1fr;}
+  .plans{grid-template-columns:1fr;}
+  .score-pills{grid-template-columns:1fr 1fr;}
+  .wiz-opts{grid-template-columns:1fr;}
+  .wiz-card{padding:24px;}
+  .auth-box{padding:36px 28px;}
+  .content{padding:18px;}
+  .rs-grid{grid-template-columns:1fr;}
+  .report-actions{flex-direction:column;}
+  .dash-cta{flex-direction:column;}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════ AUTH ═══════════════════════════════════ -->
+<div id="auth-screen" class="screen active">
+  <div class="auth-bg"></div>
+  <div class="auth-grid"></div>
+  <div class="auth-box">
+    <div class="auth-logo"><div class="auth-logo-dot"></div> ComplianceAI</div>
+    <h2 class="auth-title">Willkommen zurück</h2>
+    <p class="auth-sub">ESG-Berichte in 30 Minuten — für den deutschen Mittelstand.</p>
+    <div class="auth-tabs">
+      <button class="auth-tab on" onclick="switchTab('login',this)">Anmelden</button>
+      <button class="auth-tab" onclick="switchTab('register',this)">Registrieren</button>
+    </div>
+    <div id="login-form">
+      <div class="field"><label>E-Mail</label><input type="email" id="login-email" placeholder="ihre@firma.de" value="demo@complianceai.de"></div>
+      <div class="field"><label>Passwort</label><input type="password" id="login-pw" placeholder="••••••••" value="demo1234"></div>
+      <button class="btn-full" onclick="doLogin()">Anmelden →</button>
+    </div>
+    <div id="register-form" style="display:none">
+      <div class="field"><label>Vorname & Nachname</label><input type="text" id="reg-name" placeholder="Max Mustermann"></div>
+      <div class="field"><label>E-Mail</label><input type="email" id="reg-email" placeholder="ihre@firma.de"></div>
+      <div class="field"><label>Passwort</label><input type="password" id="reg-pw" placeholder="Mindestens 8 Zeichen"></div>
+      <div class="field"><label>Firmenname</label><input type="text" id="reg-company" placeholder="Mustermann GmbH"></div>
+      <button class="btn-full" onclick="doRegister()">Konto erstellen →</button>
+    </div>
+    <p class="auth-note">🔒 DSGVO-konform · Server in Deutschland</p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════ PAYWALL ═══════════════════════════════════ -->
+<div id="paywall-screen" class="screen">
+  <div class="paywall-inner">
+    <div class="paywall-header">
+      <div style="font-size:13px;color:var(--green);font-weight:600;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">🎉 Konto erstellt</div>
+      <h1 class="paywall-title">Wählen Sie Ihr Modell</h1>
+      <p class="paywall-sub">Einmalig für einen Bericht — oder jährlich für automatische Updates & neue Regulierungen.</p>
+    </div>
+
+    <!-- Toggle -->
+    <div style="display:flex;justify-content:center;margin-bottom:32px;">
+      <div style="display:flex;background:rgba(255,255,255,0.06);border-radius:10px;padding:4px;gap:4px;">
+        <button id="pw-toggle-once" onclick="setPricingMode('once')" style="padding:10px 24px;border-radius:7px;border:none;font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;background:var(--green);color:#fff;transition:all .2s;">Einmalig</button>
+        <button id="pw-toggle-yearly" onclick="setPricingMode('yearly')" style="padding:10px 24px;border-radius:7px;border:none;font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;background:transparent;color:var(--muted);transition:all .2s;">Jährlich <span style="background:var(--gold);color:#1a1a18;font-size:10px;padding:2px 7px;border-radius:8px;margin-left:4px;">−40%</span></button>
+      </div>
+    </div>
+
+    <div class="plans">
+      <div class="plan">
+        <div class="plan-name">Einzelbericht</div>
+        <div class="plan-price" id="pw-price-1">349€</div>
+        <div class="plan-period" id="pw-period-1">einmalig · ein Bericht</div>
+        <ul class="plan-features">
+          <li><span class="ck">✓</span> 1 vollständiger ESG-Bericht</li>
+          <li><span class="ck">✓</span> PDF-Export druckfertig</li>
+          <li><span class="ck">✓</span> ESG-Score + Benchmarking</li>
+          <li><span class="ck">✓</span> Maßnahmen-Empfehlungen</li>
+          <li><span class="ck">✓</span> 30 Tage App-Zugang</li>
+        </ul>
+        <button class="plan-btn" onclick="selectPlan('Einzelbericht', document.getElementById('pw-price-1').textContent)">Einmalig kaufen</button>
+      </div>
+      <div class="plan popular">
+        <div class="plan-badge" id="pw-badge">⭐ Empfohlen</div>
+        <div class="plan-name" id="pw-name-2">Jahres-Abo</div>
+        <div class="plan-price" id="pw-price-2">199€</div>
+        <div class="plan-period" id="pw-period-2">pro Jahr · unbegrenzte Berichte</div>
+        <ul class="plan-features">
+          <li><span class="ck">✓</span> Unbegrenzte Berichte/Jahr</li>
+          <li><span class="ck">✓</span> Automatische Regulierungs-Updates</li>
+          <li><span class="ck">✓</span> Branchen-Benchmarking aktuell</li>
+          <li><span class="ck">✓</span> Maßnahmen-Tracker</li>
+          <li><span class="ck">✓</span> Vorjahresvergleich</li>
+          <li><span class="ck">✓</span> E-Mail Support</li>
+        </ul>
+        <button class="plan-btn" onclick="selectPlan('Jahres-Abo', document.getElementById('pw-price-2').textContent)">Jetzt starten →</button>
+      </div>
+      <div class="plan">
+        <div class="plan-name">Kanzlei-Lizenz</div>
+        <div class="plan-price" id="pw-price-3">999€</div>
+        <div class="plan-period" id="pw-period-3">pro Jahr · bis 10 Mandanten</div>
+        <ul class="plan-features">
+          <li><span class="ck">✓</span> 10 Mandanten-Profile</li>
+          <li><span class="ck">✓</span> White-Label Option</li>
+          <li><span class="ck">✓</span> Mandantenverwaltung</li>
+          <li><span class="ck">✓</span> Sammelrechnung</li>
+          <li><span class="ck">✓</span> Persönlicher Support</li>
+        </ul>
+        <button class="plan-btn" onclick="selectPlan('Kanzlei', document.getElementById('pw-price-3').textContent)">Kontakt aufnehmen</button>
+      </div>
+    </div>
+    <p class="paywall-skip">💡 Einmalig oder jährlich — kein Monatsabo, kein Lock-in. Oder <span onclick="enterApp(null)">Demo kostenlos testen</span></p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════ APP ═══════════════════════════════════ -->
+<div id="app-screen" class="screen">
+  <div class="topnav">
+    <div class="topnav-logo"><div class="dot"></div> ComplianceAI</div>
+    <div class="topnav-right">
+      <span class="plan-pill" id="plan-label">Professional</span>
+      <span class="user-info" id="user-label"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="3155545c5e71525e5c415d58505f525450581f5554">[email&#160;protected]</a></span>
+      <div class="user-av" id="user-av" onclick="showView('settings')">DM</div>
+    </div>
+  </div>
+  <div class="app-body">
+    <aside class="sidebar">
+      <div class="sidebar-section" style="margin-bottom:20px">
+        <div class="sidebar-label">Übersicht</div>
+        <div class="nav-item active" onclick="showView('dashboard',this)"><span class="icon">📊</span> Dashboard</div>
+        <div class="nav-item" onclick="showView('fragebogen',this)"><span class="icon">📋</span> Fragebogen <span class="nav-badge">NEU</span></div>
+        <div class="nav-item" onclick="showView('bericht',this)"><span class="icon">📄</span> Mein Bericht</div>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-label">Konto</div>
+        <div class="nav-item" onclick="showView('settings',this)"><span class="icon">⚙️</span> Einstellungen</div>
+        <div class="nav-item" onclick="showApiModal()"><span class="icon">🔑</span> API-Key</div>
+      </div>
+    </aside>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <div id="view-dashboard" class="view active">
+        <div class="dash-welcome">
+          <h2>Guten Tag, <span id="greeting-name">Max</span> 👋</h2>
+          <p>Ihr ESG-Dashboard — Stand März 2026</p>
+        </div>
+        <div class="kpi-row">
+          <div class="kpi"><div class="kpi-label">ESG-Score</div><div class="kpi-val">72</div><div class="kpi-sub">↑ +8 Punkte vs. 2024</div></div>
+          <div class="kpi"><div class="kpi-label">Berichte</div><div class="kpi-val">1</div><div class="kpi-sub">Letzter: Feb 2026</div></div>
+          <div class="kpi"><div class="kpi-label">Maßnahmen</div><div class="kpi-val">4</div><div class="kpi-sub">2 mit hoher Priorität</div></div>
+          <div class="kpi"><div class="kpi-label">CSRD-Deadline</div><div class="kpi-val">2028</div><div class="kpi-sub">~2 Jahre verbleibend</div></div>
+        </div>
+        <div class="dash-grid">
+          <div class="card">
+            <div class="card-title">📈 ESG-Performance</div>
+            <div class="prog-item"><div class="prog-top"><span class="prog-label">🌱 Umwelt (E)</span><span class="prog-val">68/100</span></div><div class="prog-track"><div class="prog-fill" style="width:68%;background:var(--green)"></div></div></div>
+            <div class="prog-item"><div class="prog-top"><span class="prog-label">👥 Soziales (S)</span><span class="prog-val">81/100</span></div><div class="prog-track"><div class="prog-fill" style="width:81%;background:var(--gold)"></div></div></div>
+            <div class="prog-item"><div class="prog-top"><span class="prog-label">🏛️ Governance (G)</span><span class="prog-val">74/100</span></div><div class="prog-track"><div class="prog-fill" style="width:74%;background:#7b9ed9"></div></div></div>
+            <div style="height:1px;background:var(--border);margin:16px 0"></div>
+            <div class="rs-grid">
+              <div class="rs-measure"><div class="rsm-label">CO₂ (Scope 1+2)</div><div class="rsm-val">142 t</div></div>
+              <div class="rs-measure"><div class="rsm-label">Erneuerbare E.</div><div class="rsm-val">34%</div></div>
+              <div class="rs-measure"><div class="rsm-label">Frauenquote Mgmt.</div><div class="rsm-val">28%</div></div>
+              <div class="rs-measure"><div class="rsm-label">Weiterbildung</div><div class="rsm-val">4,2 T/MA</div></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">✅ Prioritäre Maßnahmen</div>
+            <div class="action-item"><span class="prio p-h">Hoch</span> CO₂-Reduktionsziel schriftlich festlegen und kommunizieren</div>
+            <div class="action-item"><span class="prio p-h">Hoch</span> Lieferanten-ESG-Fragebogen einführen</div>
+            <div class="action-item"><span class="prio p-m">Mittel</span> Frauenanteil im Management auf 33% steigern</div>
+            <div class="action-item"><span class="prio p-l">Niedrig</span> Whistleblower-Kanal einrichten</div>
+          </div>
+        </div>
+        <div class="dash-cta" style="margin-top:18px">
+          <button class="btn-green" onclick="showView('fragebogen')">➕ Neuen Bericht starten</button>
+          <button class="btn-outline" onclick="showView('bericht')">📄 Letzten Bericht ansehen</button>
+        </div>
+      </div>
+
+      <!-- FRAGEBOGEN -->
+      <div id="view-fragebogen" class="view">
+        <div class="wiz-wrap" id="wizard-container"></div>
+      </div>
+
+      <!-- BERICHT -->
+      <div id="view-bericht" class="view">
+        <div id="report-area"><div class="loader"><div style="font-size:40px">📄</div><div style="font-size:15px;font-weight:600;color:var(--white)">Noch kein Bericht</div><div class="loader-text">Füllen Sie den Fragebogen aus um Ihren ersten Bericht zu erstellen.</div><button class="btn-green" onclick="showView('fragebogen')">Jetzt starten →</button></div></div>
+      </div>
+
+      <!-- SETTINGS -->
+      <div id="view-settings" class="view">
+        <h2 style="font-family:var(--serif);font-size:28px;margin-bottom:20px;">Einstellungen</h2>
+        <div class="settings-section">
+          <div class="ss-title">Profil</div>
+          <div class="ss-row"><div><div class="ss-label">Name</div><div class="ss-sub" id="set-name-display">Max Mustermann</div></div><input class="ss-input" id="set-name" placeholder="Ihr Name"></div>
+          <div class="ss-row"><div><div class="ss-label">E-Mail</div><div class="ss-sub" id="set-email-display"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="c4a0a1a9ab84a7aba9b4a8ada5aaa7a1a5adeaa0a1">[email&#160;protected]</a></div></div><input class="ss-input" id="set-email" placeholder="E-Mail"></div>
+          <div class="ss-row"><div><div class="ss-label">Unternehmen</div></div><input class="ss-input" id="set-company" placeholder="Firmenname"></div>
+          <div style="margin-top:12px"><button class="ss-btn primary" onclick="saveProfil()">Speichern</button></div>
+        </div>
+        <div class="settings-section">
+          <div class="ss-title">Abonnement</div>
+          <div class="ss-row"><div><div class="ss-label">Aktueller Plan</div><div class="ss-sub">Monatlich · nächste Zahlung 5. April 2026</div></div><span class="ss-badge" id="plan-badge">Professional</span></div>
+          <div class="ss-row"><div><div class="ss-label">Plan upgraden / ändern</div></div><button class="ss-btn primary" onclick="showPaywall()">Plan ändern</button></div>
+          <div class="ss-row"><div><div class="ss-label">Abonnement kündigen</div><div class="ss-sub">Zum Ende des Abrechnungszeitraums</div></div><button class="ss-btn danger">Kündigen</button></div>
+        </div>
+        <div class="settings-section">
+          <div class="ss-title">API & Integrationen</div>
+          <div class="ss-row"><div><div class="ss-label">Anthropic API-Key</div><div class="ss-sub">Für KI-Berichtsgenerierung</div></div><button class="ss-btn primary" onclick="showApiModal()">Key ändern</button></div>
+        </div>
+        <div class="settings-section">
+          <div class="ss-title">Datenschutz</div>
+          <div class="ss-row"><div><div class="ss-label">Alle Daten löschen</div><div class="ss-sub">Unwiderruflich — alle Berichte und Daten werden gelöscht</div></div><button class="ss-btn danger">Daten löschen</button></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- MODALS -->
+<div class="modal-overlay" id="apiModal" style="display:none">
+  <div class="modal">
+    <h3>🔑 API-Key einrichten</h3>
+    <p>Einmalig nötig. Holen Sie Ihren kostenlosen Key auf <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a> → "API Keys" → "Create Key". Dann hier einfügen:</p>
+    <input class="modal-input" type="password" id="apiKeyInput" placeholder="sk-ant-...">
+    <button class="btn-full" onclick="saveApiKey()">Speichern</button>
+    <div class="modal-note">Key erhalten auf <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="stripeModal" style="display:none">
+  <div class="modal">
+    <h3>💳 Zahlungsdaten</h3>
+    <p>Sie kaufen: <strong id="stripe-plan-label"></strong>. Sicher und verschlüsselt via Stripe.</p>
+    <div class="stripe-mock">
+      <div class="stripe-field" style="margin-bottom:10px"><label>Karteninhaber</label><input type="text" placeholder="Max Mustermann"></div>
+      <div class="stripe-field" style="margin-bottom:10px"><label>Kartennummer</label><input type="text" placeholder="4242 4242 4242 4242" maxlength="19"></div>
+      <div class="stripe-row">
+        <div class="stripe-field"><label>Ablaufdatum</label><input type="text" placeholder="MM / JJ"></div>
+        <div class="stripe-field"><label>CVC</label><input type="text" placeholder="123" maxlength="3"></div>
+      </div>
+      <div class="stripe-secure">🔒 Gesichert via Stripe — Ihre Daten sind sicher</div>
+    </div>
+    <button class="btn-full" onclick="completePayment()">Jetzt kaufen →</button>
+    <div class="modal-note" style="text-align:center;margin-top:12px">Kein Monatsabo · Kein Lock-in · DSGVO-konform</div>
+  </div>
+</div>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+// ── STATE ──
+let state = {
+  user: null,
+  plan: null,
+  apiKey: '',
+  answers: {},
+  step: 0,
+  report: null
+};
+
+// ── QUESTIONS v3 — mit Schätz-Hilfen & Bottleneck-Flags ──
+const QUESTIONS = [
+  // ── UNTERNEHMEN ──
+  { id:'company',   cat:'🏢 Unternehmen', q:'Name Ihres Unternehmens?', hint:'Vollständiger Firmenname', type:'text', ph:'Mustermann GmbH' },
+  { id:'industry',  cat:'🏢 Unternehmen', q:'In welcher Branche sind Sie tätig?', hint:'Wählen Sie die passendste Branche', type:'select',
+    opts:['Produktion / Industrie','Handel / Einzelhandel','Bau / Handwerk','Dienstleistungen','IT / Technologie','Transport / Logistik','Gastronomie / Tourismus','Land- und Forstwirtschaft','Gesundheitswesen','Sonstiges'] },
+  { id:'employees', cat:'🏢 Unternehmen', q:'Anzahl Vollzeitäquivalente (FTE)?', hint:'Ungefähre Mitarbeiterzahl', type:'opts',
+    opts:['1–9','10–49','50–249','250–499','500+'] },
+  { id:'revenue',   cat:'🏢 Unternehmen', q:'Jährlicher Umsatz Ihres Unternehmens?', hint:'Ungefähre Angabe', type:'opts',
+    opts:['< 1 Mio. €','1–5 Mio. €','5–25 Mio. €','25–100 Mio. €','> 100 Mio. €'] },
+
+  // ── UMWELT ──
+  { id:'energy_kwh', cat:'🌱 Umwelt — Energie', q:'Jährlicher Gesamtenergieverbrauch?', hint:'Strom + Wärme kombiniert (aus Jahresabrechnung)', type:'opts',
+    opts:['< 50.000 kWh','50–200 Tsd. kWh','200 Tsd.–1 Mio. kWh','1–5 Mio. kWh','> 5 Mio. kWh'],
+    bottleneck: true,
+    bottleneckTitle: '⚡ Wo finden Sie diese Zahl?',
+    bottleneckText: 'Schauen Sie auf Ihre Strom-Jahresabrechnung (letztes Jahr). Die kWh-Zahl steht ganz oben. Falls Sie nur den monatlichen Abschlag kennen: Abschlag × 12 = Schätzung.',
+    estimate: { label: '🔢 Schätzen nach Mitarbeiterzahl', fn: 'estimateEnergy' }
+  },
+  { id:'renewable_pct', cat:'🌱 Umwelt — Energie', q:'Anteil erneuerbarer Energien?', hint:'% Ihres Stroms aus Solar, Wind, Wasserkraft etc.', type:'range', min:0, max:100, unit:'%',
+    bottleneck: true,
+    bottleneckTitle: '📄 Wo steht dieser Wert?',
+    bottleneckText: 'In Ihrem Stromvertrag unter "Herkunftsnachweis" oder "Energiemix". Falls unbekannt: 0% eintragen — Ökostromanbieter haben 100%. Sie können den Tarif jederzeit wechseln.',
+  },
+  { id:'co2_scope', cat:'🌱 Umwelt — Emissionen', q:'Erfassen Sie Ihren CO₂-Fußabdruck?', hint:'Gut: Tool berechnet aus Ihren Energiedaten automatisch', type:'opts',
+    opts:['Noch nicht erfasst','Scope 1 erfasst','Scope 1+2 erfasst','Scope 1+2+3 erfasst'],
+    note: '💡 Falls "Noch nicht erfasst": kein Problem — ComplianceAI berechnet Scope 1+2 automatisch aus Ihren Energie-Angaben.'
+  },
+  { id:'co2_target', cat:'🌱 Umwelt — Emissionen', q:'Haben Sie ein CO₂-Reduktionsziel?', hint:'Schriftlich festgelegtes Klimaziel', type:'opts',
+    opts:['Kein Ziel','Ziel intern diskutiert','Ziel intern festgelegt','Ziel öffentlich kommuniziert'],
+    note: '💡 Ein schriftliches Ziel kostet nichts und bringt sofort +8 Score-Punkte. Z.B.: "-20% CO₂ bis 2028 vs. 2024"'
+  },
+  { id:'waste', cat:'🌱 Umwelt — Ressourcen', q:'Abfall- und Recyclingmanagement?', hint:'Aktueller Stand in Ihrem Betrieb', type:'opts',
+    opts:['Keine Maßnahmen','Mülltrennung vorhanden','Aktives Recyclingprogramm','Zero-Waste-Strategie'] },
+  { id:'water', cat:'🌱 Umwelt — Ressourcen', q:'Wasserverbrauch und -management?', hint:'Maßnahmen zur Wassereinsparung', type:'opts',
+    opts:['Nicht erfasst','Erfasst, keine Maßnahmen','Einsparmaßnahmen aktiv','Zertifiziertes Wassermanagement'] },
+
+  // ── SOZIALES ──
+  { id:'diversity', cat:'👥 Soziales — Diversität', q:'Frauenanteil im Management (%)?', hint:'Führungsebene — ab Teamleiter aufwärts', type:'range', min:0, max:100, unit:'%',
+    bottleneck: true,
+    bottleneckTitle: '📊 Wer weiß das?',
+    bottleneckText: 'Ihre HR-Abteilung oder Lohnbuchhaltung. Zählen Sie: Wie viele Personen mit Personalverantwortung gibt es? Wie viele davon sind Frauen? Frauenanteil = Frauen / Gesamt × 100.'
+  },
+  { id:'pay_gap', cat:'👥 Soziales — Diversität', q:'Analysieren Sie den Gender Pay Gap?', hint:'Gehaltsunterschiede zwischen Frauen und Männern', type:'opts',
+    opts:['Nein','Analysiert, nicht kommuniziert','Analysiert und kommuniziert','Aktiv reduziert mit Ziel'] },
+  { id:'training', cat:'👥 Soziales — Mitarbeiter', q:'Weiterbildungstage pro Mitarbeiter/Jahr?', hint:'Durchschnittliche Schulungstage — intern + extern', type:'range', min:0, max:20, unit:' Tage/MA',
+    bottleneck: true,
+    bottleneckTitle: '📁 Wo finden Sie diese Zahl?',
+    bottleneckText: 'Schulungsrechnungen, Seminarbelege, interne Schulungskalender. Summe aller Schulungstage aller MA ÷ Anzahl MA. Falls unbekannt: Schätzen Sie — Ø Deutschland KMU: 1,5–3 Tage/MA.',
+    estimate: { label: '🔢 Branchen-Richtwert anzeigen', fn: 'estimateTraining' }
+  },
+  { id:'health', cat:'👥 Soziales — Mitarbeiter', q:'Gesundheits- und Sicherheitsmanagement?', hint:'Maßnahmen für Mitarbeitergesundheit und -sicherheit', type:'opts',
+    opts:['Gesetzliches Minimum','Zusätzliche Maßnahmen','Zertifiziertes BGM','ISO 45001 zertifiziert'] },
+  { id:'supply_chain', cat:'👥 Soziales — Lieferkette', q:'ESG-Kriterien in der Lieferkette?', hint:'Lieferantenauswahl nach Nachhaltigkeitskriterien', type:'opts',
+    opts:['Keine Anforderungen','Infos werden gesammelt','ESG-Fragebogen für Lieferanten','Auditprogramm vorhanden'],
+    note: '💡 Kein Lieferantenkodex? Ein 1-seitiger Fragebogen an Ihre Top-10-Lieferanten reicht für Kunden und ist kostenlos umsetzbar.'
+  },
+
+  // ── GOVERNANCE ──
+  { id:'coc', cat:'🏛️ Governance', q:'Haben Sie einen Verhaltenskodex (Code of Conduct)?', hint:'Schriftliche Ethik- und Verhaltensrichtlinie', type:'opts',
+    opts:['Nein','In Entwicklung','Vorhanden, intern','Vorhanden, öffentlich kommuniziert'] },
+  { id:'whistleblower', cat:'🏛️ Governance', q:'Whistleblower-Kanal vorhanden?', hint:'Anonymer Meldekanal (EU-Richtlinie 2019/1937 — Pflicht ab 50 MA!)', type:'opts',
+    opts:['Nein','In Planung','Interner Kanal','Externer anonymer Kanal'],
+    note: '⚠️ EU-Pflicht für Unternehmen > 50 MA! Externer Anbieter kostet ~200€/Jahr (z.B. EQS Integrity, Hintbox). Sofort einrichten.'
+  },
+  { id:'board_esg', cat:'🏛️ Governance', q:'ESG-Verantwortung auf Geschäftsführungsebene?', hint:'Wer ist formal für Nachhaltigkeit zuständig?', type:'opts',
+    opts:['Niemand formal zuständig','Projektverantwortlicher MA','Nachhaltigkeitsbeauftragter','GF-Mitglied zuständig'] },
+  { id:'reporting_history', cat:'🏛️ Governance', q:'Haben Sie bereits ESG-Berichte erstellt?', hint:'Frühere Berichterstattung im Unternehmen', type:'opts',
+    opts:['Noch nie','Einmal intern','1–2 externe Berichte','Jährliche Berichterstattung'] },
+
+  // ── ZIELE ──
+  { id:'goals', cat:'🎯 Ihre Ziele', q:'Was sind Ihre wichtigsten Nachhaltigkeitsziele?', hint:'Freitext — Ihre Ambitionen für 2026–2030', type:'textarea',
+    ph:'z.B. CO₂-Neutralität bis 2030, faire Löhne entlang der Lieferkette, 50% erneuerbare Energie...' },
+];
+
+// ── AUTH ──
+function switchTab(tab, el) {
+  document.querySelectorAll('.auth-tab').forEach(t=>t.classList.remove('on'));
+  el.classList.add('on');
+  document.getElementById('login-form').style.display = tab==='login'?'block':'none';
+  document.getElementById('register-form').style.display = tab==='register'?'block':'none';
+}
+
+function doLogin() {
+  const email = document.getElementById('login-email').value || 'demo@complianceai.de';
+  const name = email.split('@')[0].replace(/\./g,' ').replace(/\b\w/g,c=>c.toUpperCase());
+  state.user = { email, name, company:'Demo GmbH' };
+  state.plan = 'Professional';
+  enterApp('Professional');
+}
+
+function doRegister() {
+  const name = document.getElementById('reg-name').value || 'Max Mustermann';
+  const email = document.getElementById('reg-email').value || 'neu@firma.de';
+  const company = document.getElementById('reg-company').value || 'Meine Firma GmbH';
+  state.user = { email, name, company };
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('paywall-screen').classList.add('active');
+}
+
+function setPricingMode(mode) {
+  const isYearly = mode === 'yearly';
+  document.getElementById('pw-toggle-once').style.background = isYearly ? 'transparent' : 'var(--green)';
+  document.getElementById('pw-toggle-once').style.color = isYearly ? 'var(--muted)' : 'white';
+  document.getElementById('pw-toggle-yearly').style.background = isYearly ? 'var(--green)' : 'transparent';
+  document.getElementById('pw-toggle-yearly').style.color = isYearly ? 'white' : 'var(--muted)';
+  if (isYearly) {
+    document.getElementById('pw-price-1').textContent = '199€';
+    document.getElementById('pw-period-1').textContent = 'pro Jahr · 1 Bericht/Jahr';
+    document.getElementById('pw-price-2').textContent = '149€';
+    document.getElementById('pw-period-2').textContent = 'pro Jahr · unbegrenzte Berichte';
+    document.getElementById('pw-price-3').textContent = '799€';
+    document.getElementById('pw-period-3').textContent = 'pro Jahr · bis 10 Mandanten';
+    document.getElementById('pw-badge').textContent = '⭐ Bestes Preis-Leistungs-Verhältnis';
+  } else {
+    document.getElementById('pw-price-1').textContent = '349€';
+    document.getElementById('pw-period-1').textContent = 'einmalig · ein Bericht';
+    document.getElementById('pw-price-2').textContent = '199€';
+    document.getElementById('pw-period-2').textContent = 'pro Jahr · unbegrenzte Berichte';
+    document.getElementById('pw-price-3').textContent = '999€';
+    document.getElementById('pw-period-3').textContent = 'pro Jahr · bis 10 Mandanten';
+    document.getElementById('pw-badge').textContent = '⭐ Empfohlen';
+  }
+}
+
+function selectPlan(plan, price) {
+  state.plan = plan;
+  document.getElementById('stripe-plan-label').textContent = `${price} — ${plan}`;
+  document.getElementById('stripeModal').style.display = 'flex';
+}
+
+function completePayment() {
+  document.getElementById('stripeModal').style.display = 'none';
+  enterApp(state.plan);
+  toast('✅ Plan aktiviert! 14-tägige Testphase läuft.');
+}
+
+function showPaywall() {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('paywall-screen').classList.add('active');
+}
+
+function enterApp(plan) {
+  if(plan) state.plan = plan;
+  if(!state.user) state.user = { email:'demo@complianceai.de', name:'Max Demo', company:'Demo GmbH' };
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('app-screen').classList.add('active');
+  const initials = state.user.name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
+  document.getElementById('user-av').textContent = initials;
+  document.getElementById('user-label').textContent = state.user.email;
+  document.getElementById('plan-label').textContent = state.plan || 'Demo';
+  document.getElementById('plan-badge').textContent = state.plan || 'Demo';
+  document.getElementById('greeting-name').textContent = state.user.name.split(' ')[0];
+  renderWizard();
+  setTimeout(() => {
+    const key = 'cai_draft_' + (state.user?.email || 'guest');
+    if (localStorage.getItem(key)) loadProgress();
+  }, 400);
+}
+
+// ── NAVIGATION ──
+function showView(name, el) {
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(i=>i.classList.remove('active'));
+  const v = document.getElementById('view-'+name);
+  if(v) v.classList.add('active');
+  if(el) el.classList.add('active');
+  else {
+    document.querySelectorAll('.nav-item').forEach(item=>{
+      if(item.textContent.toLowerCase().includes(name.replace('-',' '))) item.classList.add('active');
+    });
+  }
+}
+
+// ── SCHÄTZ-FUNKTIONEN ──
+function estimateEnergy() {
+  const emp = state.answers.employees || '10–49';
+  const ind = state.answers.industry || '';
+  const isProd = ind.includes('Produktion') || ind.includes('Bau') || ind.includes('Transport');
+  const map = {
+    '1–9':    isProd ? '50–200 Tsd. kWh'         : '< 50.000 kWh',
+    '10–49':  isProd ? '200 Tsd.–1 Mio. kWh'     : '50–200 Tsd. kWh',
+    '50–249': isProd ? '1–5 Mio. kWh'            : '200 Tsd.–1 Mio. kWh',
+    '250–499':isProd ? '> 5 Mio. kWh'            : '1–5 Mio. kWh',
+    '500+':   '> 5 Mio. kWh',
+  };
+  const est = map[emp] || '50–200 Tsd. kWh';
+  showEstimateToast(`Schätzung für ${emp} MA (${isProd?'Produktion':'Büro/Dienst'}): <strong>${est}</strong>`);
+  // Auto-select
+  const q = QUESTIONS[state.step];
+  state.answers[q.id] = est;
+  renderWizard();
+}
+
+function estimateTraining() {
+  const ind = state.answers.industry || '';
+  const isProd = ind.includes('Produktion') || ind.includes('Bau');
+  const isIT   = ind.includes('IT') || ind.includes('Tech');
+  const avg    = isIT ? '4–6 Tage (IT-Branche liegt höher)' : isProd ? '2–3 Tage (Produktion/Handwerk)' : '1,5–3 Tage (Branchenø Deutschland)';
+  showEstimateToast(`Branchenrichtwert Weiterbildung: <strong>${avg}</strong> pro MA/Jahr`);
+}
+
+function showEstimateToast(msg) {
+  let t = document.getElementById('est-toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'est-toast';
+    t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1a3320;border:1px solid var(--green);color:var(--text);padding:14px 22px;border-radius:10px;font-size:14px;z-index:999;max-width:480px;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,.4);transition:opacity .3s;';
+    document.body.appendChild(t);
+  }
+  t.innerHTML = '🔢 ' + msg + '<br><span style="font-size:12px;color:var(--muted)">Als Schätzung übernommen — Sie können jederzeit korrigieren</span>';
+  t.style.opacity = '1';
+  setTimeout(() => { t.style.opacity = '0'; }, 4500);
+}
+
+// ── SPEICHERN & FORTSETZEN ──
+function saveProgress() {
+  const key = 'cai_draft_' + (state.user?.email || 'guest');
+  localStorage.setItem(key, JSON.stringify({ step: state.step, answers: state.answers, ts: Date.now() }));
+  toast('💾 Fortschritt gespeichert — Sie können jederzeit weitermachen.');
+}
+
+function loadProgress() {
+  const key = 'cai_draft_' + (state.user?.email || 'guest');
+  const raw = localStorage.getItem(key);
+  if (!raw) return false;
+  try {
+    const d = JSON.parse(raw);
+    const age = Math.round((Date.now() - d.ts) / 60000);
+    if (confirm(`Gespeicherter Fortschritt gefunden (vor ${age} Min, Schritt ${d.step+1}/${QUESTIONS.length}).\nWeitermachen?`)) {
+      state.step = d.step;
+      state.answers = d.answers;
+      renderWizard();
+      return true;
+    }
+  } catch(e) {}
+  return false;
+}
+
+function clearSave() {
+  const key = 'cai_draft_' + (state.user?.email || 'guest');
+  localStorage.removeItem(key);
+}
+
+// ── WIZARD ──
+function renderWizard() {
+  const c = document.getElementById('wizard-container');
+  if (state.step >= QUESTIONS.length) { generateReport(); return; }
+  const q = QUESTIONS[state.step];
+  const val = state.answers[q.id];
+  const segs = QUESTIONS.map((_,i) => `<div class="wiz-seg ${i<state.step?'done':i===state.step?'cur':''}"></div>`).join('');
+
+  // Input HTML
+  let inp = '';
+  if (q.type === 'text') {
+    inp = `<input class="wiz-input" id="wi" type="text" placeholder="${q.ph}" value="${val||''}" onkeydown="if(event.key==='Enter')nextStep()">`;
+  } else if (q.type === 'textarea') {
+    inp = `<textarea class="wiz-input" id="wi" rows="4" placeholder="${q.ph}" style="resize:vertical">${val||''}</textarea>`;
+  } else if (q.type === 'select') {
+    inp = `<select class="wiz-select" id="wi"><option value="">Bitte wählen...</option>${q.opts.map(o=>`<option value="${o}"${val===o?' selected':''}>${o}</option>`).join('')}</select>`;
+  } else if (q.type === 'opts') {
+    inp = `<div class="wiz-opts">${q.opts.map(o=>`<div class="wiz-opt${val===o?' sel':''}" onclick="pickOpt(this,'${o.replace(/'/g,"\\'")}',${state.step})">${o}</div>`).join('')}</div>`;
+  } else if (q.type === 'range') {
+    const cur = val !== undefined ? val : Math.round((q.min + q.max) / 2);
+    inp = `<div class="wiz-range-wrap">
+      <div class="wiz-range-val" id="rv">${cur}${q.unit}</div>
+      <input class="wiz-range" id="wi" type="range" min="${q.min}" max="${q.max}" value="${cur}" oninput="document.getElementById('rv').textContent=this.value+'${q.unit}'">
+    </div>`;
+  }
+
+  // Bottleneck helper box
+  const bnHtml = q.bottleneck ? `
+    <details class="wiz-bottleneck" style="margin:14px 0 0;border:1px solid rgba(201,165,90,.25);border-radius:8px;overflow:hidden;">
+      <summary style="cursor:pointer;padding:10px 14px;background:rgba(201,165,90,.08);font-size:13px;font-weight:600;color:var(--gold);list-style:none;display:flex;align-items:center;gap:8px;">
+        <span>⚠️</span> ${q.bottleneckTitle} <span style="margin-left:auto;font-size:11px;color:var(--muted)">Klicken zum Öffnen</span>
+      </summary>
+      <div style="padding:12px 14px;font-size:13px;color:#bcc8be;line-height:1.6;">
+        ${q.bottleneckText}
+        ${q.estimate ? `<br><button onclick="${q.estimate.fn}()" style="margin-top:10px;padding:6px 14px;background:rgba(74,158,107,.15);border:1px solid var(--green);color:var(--green);border-radius:6px;font-size:12px;cursor:pointer;font-family:inherit;">${q.estimate.label}</button>` : ''}
+      </div>
+    </details>` : '';
+
+  // Inline note (not bottleneck, just a tip)
+  const noteHtml = q.note ? `<div style="margin:12px 0 0;padding:10px 14px;background:rgba(74,158,107,.08);border-left:3px solid var(--green);border-radius:0 6px 6px 0;font-size:13px;color:#a0c8a8;line-height:1.6;">${q.note}</div>` : '';
+
+  // Skip button — allow skipping non-essential questions
+  const canSkip = !['company','industry','employees'].includes(q.id);
+  const skipBtn = canSkip ? `<button class="wiz-skip" onclick="skipStep()" title="Frage überspringen (als 'Nicht erfasst' markiert)">Überspringen →</button>` : '';
+
+  c.innerHTML = `
+    <div class="wiz-prog-bar">${segs}</div>
+    <div class="wiz-card">
+      <div class="wiz-toprow">
+        <div class="wiz-cat">${q.cat}</div>
+        <button onclick="saveProgress()" style="background:none;border:1px solid var(--border2);color:var(--muted);font-size:11px;padding:4px 10px;border-radius:6px;cursor:pointer;font-family:inherit;">💾 Speichern</button>
+      </div>
+      <div class="wiz-q">${q.q}</div>
+      <div class="wiz-hint">${q.hint}</div>
+      ${inp}
+      ${bnHtml}
+      ${noteHtml}
+      <div class="wiz-nav">
+        <button class="wiz-back" onclick="prevStep()" ${state.step===0?'style="visibility:hidden"':''}>← Zurück</button>
+        <span class="wiz-ctr">${state.step+1} / ${QUESTIONS.length}</span>
+        <div style="display:flex;gap:8px;align-items:center;">
+          ${skipBtn}
+          <button class="wiz-next" onclick="nextStep()">${state.step===QUESTIONS.length-1?'Bericht erstellen 🎉':'Weiter →'}</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function skipStep() {
+  const q = QUESTIONS[state.step];
+  state.answers[q.id] = q.type === 'range' ? 0 : (q.opts ? q.opts[0] : 'Nicht erfasst');
+  state.skipped = state.skipped || [];
+  state.skipped.push(q.id);
+  state.step++;
+  renderWizard();
+  toast(`"${q.q.substring(0,40)}..." übersprungen — wird als Datenlücke markiert`);
+}
+
+function pickOpt(el, val, step) {
+  if (step !== state.step) return;
+  document.querySelectorAll('.wiz-opt').forEach(o => o.classList.remove('sel'));
+  el.classList.add('sel');
+  state.answers[QUESTIONS[step].id] = val;
+}
+
+function nextStep() {
+  const q = QUESTIONS[state.step];
+  if (q.type !== 'opts') {
+    const wi = document.getElementById('wi');
+    if (wi) state.answers[q.id] = q.type === 'range' ? Number(wi.value) : wi.value;
+  }
+  if (!state.answers[q.id] && state.answers[q.id] !== 0) {
+    const wi = document.getElementById('wi');
+    if (wi) wi.style.borderColor = 'var(--danger)';
+    return;
+  }
+  // Auto-save every 5 steps
+  if (state.step % 5 === 4) saveProgress();
+  state.step++;
+  renderWizard();
+}
+
+function prevStep() {
+  if (state.step > 0) { state.step--; renderWizard(); }
+}
+
+
+// ── REPORT GENERATION ──
+async function generateReport() {
+  showView('bericht');
+  const ra = document.getElementById('report-area');
+  const steps = ['Daten analysieren...','ESG-Score berechnen...','Benchmarking durchführen...','Bericht verfassen...','Maßnahmen priorisieren...'];
+  ra.innerHTML = `<div class="loader"><div class="spinner"></div><div class="loader-text">KI erstellt Ihren Bericht</div><div class="loader-steps">${steps.map((s,i)=>`<div class="ls" id="ls${i}">⏳ ${s}</div>`).join('')}</div></div>`;
+
+  steps.forEach((_,i) => setTimeout(()=>{
+    const el = document.getElementById('ls'+i);
+    if(el){el.classList.add('show');if(i>0)document.getElementById('ls'+(i-1)).textContent='✅ '+steps[i-1];el.textContent='⏳ '+steps[i];}
+  }, i*900));
+
+  if (!state.apiKey && (window.location.hostname === 'localhost' || window.location.protocol === 'file:')) {
+    setTimeout(() => { showApiModal(true); }, 600); return;
+  }
+
+  const a = state.answers;
+  const skipped = state.skipped || [];
+  const skipNote = skipped.length > 0 ? `\nHINWEIS DATENLÜCKEN: Folgende Felder wurden nicht erfasst (als Schätzung/Datenlücke im Bericht kennzeichnen): ${skipped.join(', ')}` : '';
+  const prompt = `Du bist ein erfahrener ESG-Berater. Erstelle einen detaillierten deutschen ESG-Nachhaltigkeitsbericht basierend auf diesen Unternehmensdaten:
+
+UNTERNEHMEN: ${a.company} | Branche: ${a.industry} | Mitarbeiter: ${a.employees} | Umsatz: ${a.revenue}
+
+UMWELT:
+- Energieverbrauch: ${a.energy_kwh}
+- Erneuerbare Energie: ${a.renewable_pct}%
+- CO₂-Erfassung: ${a.co2_scope}
+- CO₂-Reduktionsziel: ${a.co2_target}
+- Abfallmanagement: ${a.waste}
+- Wassermanagement: ${a.water}
+
+SOZIALES:
+- Frauenanteil Management: ${a.diversity}%
+- Gender Pay Gap Analyse: ${a.pay_gap}
+- Weiterbildung: ${a.training} Tage/MA
+- Gesundheit & Sicherheit: ${a.health}
+- Lieferkettenmanagement: ${a.supply_chain}
+
+GOVERNANCE:
+- Verhaltenskodex: ${a.coc}
+- Whistleblower-Kanal: ${a.whistleblower}
+- ESG-Verantwortung: ${a.board_esg}
+- Berichterstattungshistorie: ${a.reporting_history}
+
+ZIELE: ${a.goals}
+${skipNote}
+
+Antworte NUR als JSON (kein Markdown):
+{
+  "score_total": <0-100>,
+  "score_e": <0-100>,
+  "score_s": <0-100>,
+  "score_g": <0-100>,
+  "grade": "<A+/A/A-/B+/B/B-/C+/C>",
+  "zusammenfassung": "<3-4 Sätze Gesamtbewertung — erwähne Datenlücken falls vorhanden>",
+  "umwelt": "<4-5 Sätze detaillierte Umweltanalyse mit konkreten Einschätzungen>",
+  "soziales": "<4-5 Sätze detaillierte Sozialanalyse>",
+  "governance": "<4-5 Sätze detaillierte Governance-Analyse>",
+  "staerken": "<3 konkrete Stärken, durch Semikolon getrennt>",
+  "schwaechen": "<3 konkrete Schwächen, durch Semikolon getrennt>",
+  "massnahmen": "<5 konkrete priorisierte Maßnahmen mit Zeitrahmen, durch Semikolon getrennt>",
+  "ausblick": "<3-4 Sätze CSRD-Einordnung und strategischer Ausblick>"
+}`;
+
+  try {
+    const res = await fetch('/api/claude', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 2000, messages: [{ role: 'user', content: prompt }] })
+    });
+    const data = await res.json();
+    if(data.error) throw new Error(data.error.message);
+    const text = data.content.map(b=>b.text||'').join('');
+    const clean = text.replace(/```json|```/g,'').trim();
+    state.report = JSON.parse(clean);
+    renderReport(state.report);
+  } catch(e) {
+    ra.innerHTML = `<div class="loader"><div style="font-size:36px">⚠️</div><div style="font-weight:600;color:var(--danger)">Fehler</div><div class="loader-text">${e.message}</div><button class="btn-green" onclick="showApiModal(true)">API-Key prüfen</button></div>`;
+  }
+}
+
+function renderReport(r) {
+  const a = state.answers;
+  const staerken = (r.staerken||'').split(';').map(s=>s.trim()).filter(Boolean);
+  const schwaechen = (r.schwaechen||'').split(';').map(s=>s.trim()).filter(Boolean);
+  const massnahmen = (r.massnahmen||'').split(';').map(s=>s.trim()).filter(Boolean);
+
+  document.getElementById('report-area').innerHTML = `
+    <div class="report-wrap">
+      <div class="report-actions">
+        <button class="btn-green" onclick="exportPDF()">📥 PDF herunterladen</button>
+        <button class="btn-outline" onclick="resetWizard()">🔄 Neuer Bericht</button>
+      </div>
+      <div class="report-hero" id="report-pdf-top">
+        <div class="report-co">${a.industry} · ${a.employees} Mitarbeiter · ${a.revenue}</div>
+        <div class="report-title-text">${a.company}</div>
+        <div class="report-year">ESG-Nachhaltigkeitsbericht 2026 · erstellt mit ComplianceAI</div>
+        <div class="score-pills">
+          <div class="score-pill"><div class="sp-label">Gesamt</div><div class="sp-val">${r.score_total}</div><div class="sp-grade">${r.grade}</div></div>
+          <div class="score-pill"><div class="sp-label">🌱 Umwelt</div><div class="sp-val">${r.score_e}</div><div class="sp-grade">${r.score_e>=70?'Gut':'Verbesserungsbedarf'}</div></div>
+          <div class="score-pill"><div class="sp-label">👥 Soziales</div><div class="sp-val">${r.score_s}</div><div class="sp-grade">${r.score_s>=70?'Gut':'Verbesserungsbedarf'}</div></div>
+          <div class="score-pill"><div class="sp-label">🏛️ Governance</div><div class="sp-val">${r.score_g}</div><div class="sp-grade">${r.score_g>=70?'Gut':'Verbesserungsbedarf'}</div></div>
+        </div>
+      </div>
+      ${section('📋 Zusammenfassung', r.zusammenfassung)}
+      ${section('🌱 Umwelt (E)', r.umwelt)}
+      ${section('👥 Soziales (S)', r.soziales)}
+      ${section('🏛️ Governance (G)', r.governance)}
+      <div class="report-section">
+        <div class="rs-title">💪 Stärken & ⚠️ Verbesserungspotenzial</div>
+        <div class="rs-grid">
+          <div class="rs-measure" style="background:rgba(74,158,107,0.08);border-color:rgba(74,158,107,0.2)">
+            <div class="rsm-label" style="color:var(--green)">Stärken</div>
+            ${staerken.map(s=>`<div style="font-size:12px;color:#9aaa9d;margin-top:6px;">✅ ${s}</div>`).join('')}
+          </div>
+          <div class="rs-measure" style="background:rgba(224,85,85,0.06);border-color:rgba(224,85,85,0.15)">
+            <div class="rsm-label" style="color:var(--danger)">Verbesserungsbedarf</div>
+            ${schwaechen.map(s=>`<div style="font-size:12px;color:#9aaa9d;margin-top:6px;">⚠️ ${s}</div>`).join('')}
+          </div>
+        </div>
+      </div>
+      <div class="report-section">
+        <div class="rs-title">✅ Priorisierte Maßnahmen</div>
+        ${massnahmen.map((m,i)=>`<div style="display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px;color:#9aaa9d;align-items:flex-start;"><span style="background:${i<2?'rgba(224,85,85,.15)':i<4?'rgba(201,165,90,.15)':'var(--green-d)'};color:${i<2?'#e07777':i<4?'var(--gold)':'var(--green)'};padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;white-space:nowrap;margin-top:2px">${i<2?'HOCH':i<4?'MITTEL':'NIEDRIG'}</span>${m}</div>`).join('')}
+      </div>
+      ${section('🔮 Ausblick & CSRD-Einordnung', r.ausblick)}
+      <div style="text-align:center;padding:20px;font-size:11px;color:var(--muted)">⚠️ Dieser Bericht dient der Vorbereitung und ersetzt keine formale Wirtschaftsprüferprüfung. · ComplianceAI 2026</div>
+    </div>`;
+}
+
+function section(title, content) {
+  return `<div class="report-section"><div class="rs-title">${title}</div><div class="rs-content">${content}</div></div>`;
+}
+
+function resetWizard() {
+  state.step = 0; state.answers = {}; state.report = null;
+  showView('fragebogen');
+  renderWizard();
+}
+
+// ── PDF EXPORT — Professional v4 ──
+async function exportPDF() {
+  if (!state.report) return;
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const r = state.report;
+  const a = state.answers;
+  const W = 210, H = 297, M = 16, CW = W - 2 * M;
+  let y = 0;
+
+  const g  = (c) => doc.setTextColor(...c);
+  const bg = (c) => doc.setFillColor(...c);
+  const GR = [61,153,98], GRL = [82,184,122], GOLD = [200,160,78];
+  const DARK = [12,17,13], FOREST = [21,34,23], MUTED = [110,133,114];
+  const TXT = [40,58,43], WHITE = [236,242,237];
+  const RED = [200,80,80], WARN = [210,130,60], BLUE = [91,143,196];
+
+  const company = a.company || 'Ihr Unternehmen';
+  const staerken   = (r.staerken   || '').split(';').map(s=>s.trim()).filter(Boolean);
+  const schwaechen = (r.schwaechen || '').split(';').map(s=>s.trim()).filter(Boolean);
+  const massnahmen = (r.massnahmen || '').split(';').map(s=>s.trim()).filter(Boolean);
+
+  function newPageHeader() {
+    bg(FOREST); doc.rect(0,0,W,11,'F');
+    bg(GR);     doc.rect(0,0,3,11,'F');
+    g(WHITE); doc.setFontSize(7.5); doc.setFont('helvetica','bold');
+    doc.text('ComplianceAI  ESG-Bericht 2026', M, 7.5);
+    g(MUTED); doc.setFont('helvetica','normal');
+    doc.text(company.substring(0,45), W-M, 7.5, {align:'right'});
+    y = 20;
+  }
+
+  function chk(need) {
+    if (y + need > H - 12) { doc.addPage(); newPageHeader(); }
+  }
+
+  function wrap(text, x, w, size, col, lh) {
+    lh = lh || 5.2;
+    g(col); doc.setFontSize(size); doc.setFont('helvetica','normal');
+    doc.splitTextToSize(text||'', w).forEach(l => { chk(8); doc.text(l, x, y); y += lh; });
+  }
+
+  function secTitle(title, col) {
+    chk(14);
+    bg([240,247,242]); doc.rect(M, y-1, CW, 9, 'F');
+    bg(col);           doc.rect(M, y-1, 3,  9, 'F');
+    g(TXT); doc.setFontSize(10); doc.setFont('helvetica','bold');
+    doc.text(title, M+7, y+5.5);
+    y += 13;
+  }
+
+  function bar(label, val, col) {
+    chk(13);
+    g(MUTED); doc.setFontSize(8); doc.setFont('helvetica','normal');
+    doc.text(label, M+4, y+3);
+    g(col); doc.setFontSize(8.5); doc.setFont('helvetica','bold');
+    doc.text(String(val)+'/100', W-M-4, y+3, {align:'right'});
+    bg([225,235,227]); doc.rect(M+4, y+5, CW-8, 3, 'F');
+    bg(col);           doc.rect(M+4, y+5, (CW-8)*Math.min(val,100)/100, 3, 'F');
+    y += 13;
+  }
+
+  // ── SEITE 1: DECKBLATT ──
+  bg(DARK);   doc.rect(0,0,W,H,'F');
+  bg(GR);     doc.rect(0,0,3,H,'F');
+  bg(FOREST); doc.rect(0,H-55,W,55,'F');
+
+  g(GRL); doc.setFontSize(12); doc.setFont('helvetica','bold');
+  doc.text('ComplianceAI', 20, 26);
+  g(MUTED); doc.setFontSize(8); doc.setFont('helvetica','normal');
+  doc.text('ESG-Berichtsplattform fuer den deutschen Mittelstand', 20, 33);
+  bg(GR); doc.rect(20,38,18,0.5,'F');
+
+  g(WHITE); doc.setFontSize(24); doc.setFont('helvetica','bold');
+  y = 52;
+  doc.splitTextToSize(company, CW-20).forEach(l => { doc.text(l, 20, y); y += 10; });
+
+  g(MUTED); doc.setFontSize(10); doc.setFont('helvetica','normal');
+  doc.text('ESG-Nachhaltigkeitsbericht 2026', 20, y+5);
+  y += 14;
+  g([80,110,85]); doc.setFontSize(8.5);
+  doc.text([a.industry||'', (a.employees||'') + ' Mitarbeiter', a.revenue||''].filter(s=>s.trim()).join('  |  '), 20, y);
+
+  // Score-Box
+  y = 108;
+  bg([18,32,20]); doc.roundedRect(20,y,74,46,3,3,'F');
+  bg(GR);         doc.roundedRect(20,y,74,9,3,3,'F');
+  bg(GR);         doc.rect(20,y+5,74,4,'F');
+  g(WHITE); doc.setFontSize(7); doc.setFont('helvetica','bold');
+  doc.text('GESAMT-ESG-SCORE', 57, y+7, {align:'center'});
+  g(WHITE); doc.setFontSize(36); doc.setFont('helvetica','bold');
+  doc.text(String(r.score_total||0), 57, y+32, {align:'center'});
+  g(GRL); doc.setFontSize(12);
+  doc.text(String(r.grade||''), 57, y+42, {align:'center'});
+
+  // Sub-Scores
+  [['Umwelt E',r.score_e,GR],['Soziales S',r.score_s,GOLD],['Governance G',r.score_g,BLUE]].forEach(([lbl,val,col],i) => {
+    const bx = 20 + i*54;
+    bg([18,28,20]); doc.roundedRect(bx, y+52, 50,18,2,2,'F');
+    g(col); doc.setFontSize(6.5); doc.setFont('helvetica','bold');
+    doc.text(lbl, bx+25, y+59, {align:'center'});
+    g(WHITE); doc.setFontSize(13); doc.setFont('helvetica','bold');
+    doc.text(String(val||0), bx+25, y+68, {align:'center'});
+  });
+
+  // Staerken Preview
+  y = 205;
+  g(MUTED); doc.setFontSize(7.5); doc.setFont('helvetica','bold');
+  doc.text('STAERKEN', 20, y); y += 7;
+  staerken.slice(0,3).forEach(s => {
+    g(GR); doc.setFontSize(8); doc.setFont('helvetica','bold'); doc.text('+', 20, y);
+    g([160,195,170]); doc.setFont('helvetica','normal');
+    doc.text(s.substring(0,80), 26, y); y += 6;
+  });
+
+  g([50,70,52]); doc.setFontSize(6.5); doc.setFont('helvetica','normal');
+  doc.text('Erstellt: '+new Date().toLocaleDateString('de-DE')+'  |  complianceai.de', W/2, 289, {align:'center'});
+  doc.text('Dieser Bericht dient der Vorbereitung. Kein Ersatz fuer eine Wirtschaftsprueferung.', W/2, 294, {align:'center'});
+
+  // ── SEITE 2: ANALYSE ──
+  doc.addPage(); newPageHeader();
+
+  secTitle('Zusammenfassung', GR);
+  wrap(r.zusammenfassung||'', M+4, CW-8, 9.5, TXT); y += 4;
+
+  secTitle('Umwelt (E)', GR);
+  wrap(r.umwelt||'', M+4, CW-8, 9.5, TXT); y += 3;
+  bar('Umwelt-Score', r.score_e||0, GR);
+
+  secTitle('Soziales (S)', GOLD);
+  wrap(r.soziales||'', M+4, CW-8, 9.5, TXT); y += 3;
+  bar('Sozial-Score', r.score_s||0, GOLD);
+
+  secTitle('Governance (G)', BLUE);
+  wrap(r.governance||'', M+4, CW-8, 9.5, TXT); y += 3;
+  bar('Governance-Score', r.score_g||0, BLUE);
+
+  // ── SEITE 3: MASSNAHMEN ──
+  doc.addPage(); newPageHeader();
+
+  // Staerken / Schwaechen nebeneinander
+  const hw = (CW-6)/2;
+  chk(48);
+  bg([230,248,236]); doc.rect(M, y, hw, 44,'F');
+  g(GR); doc.setFontSize(8.5); doc.setFont('helvetica','bold');
+  doc.text('Staerken', M+4, y+7);
+  staerken.slice(0,3).forEach((s,i) => {
+    g(TXT); doc.setFontSize(8); doc.setFont('helvetica','normal');
+    doc.splitTextToSize('+ '+s, hw-8).slice(0,2).forEach((l,li) => doc.text(l, M+4, y+14+i*10+li*5));
+  });
+  bg([253,235,235]); doc.rect(M+hw+6, y, hw, 44,'F');
+  g(RED); doc.setFontSize(8.5); doc.setFont('helvetica','bold');
+  doc.text('Verbesserungsbedarf', M+hw+10, y+7);
+  schwaechen.slice(0,3).forEach((s,i) => {
+    g(TXT); doc.setFontSize(8); doc.setFont('helvetica','normal');
+    doc.splitTextToSize('! '+s, hw-8).slice(0,2).forEach((l,li) => doc.text(l, M+hw+10, y+14+i*10+li*5));
+  });
+  y += 50;
+
+  secTitle('Priorisierte Massnahmen', GR);
+  const PC = [RED,RED,WARN,WARN,GR];
+  const PL = ['HOCH','HOCH','MITTEL','MITTEL','NIEDRIG'];
+  massnahmen.forEach((m,i) => {
+    chk(13);
+    bg([248,250,248]); doc.rect(M, y-1, CW, 11,'F');
+    bg(PC[i]||GR);     doc.rect(M, y-1, 2,  11,'F');
+    g(PC[i]||GR); doc.setFontSize(7); doc.setFont('helvetica','bold');
+    doc.text(PL[i]||'', M+5, y+5.5);
+    g(TXT); doc.setFontSize(9); doc.setFont('helvetica','normal');
+    const ml = doc.splitTextToSize(m, CW-28);
+    doc.text(ml[0]||'', M+24, y+5.5);
+    y += 13;
+    if (ml.length>1) { g(MUTED); doc.text(ml.slice(1).join(' '), M+24, y); y+=5; }
+  });
+
+  y += 5;
+  secTitle('Ausblick & CSRD-Einordnung', BLUE);
+  wrap(r.ausblick||'', M+4, CW-8, 9.5, TXT);
+
+  // Footer alle Seiten ab Seite 2
+  const pages = doc.internal.getNumberOfPages();
+  for (let i=2; i<=pages; i++) {
+    doc.setPage(i);
+    bg([14,20,15]); doc.rect(0,H-9,W,9,'F');
+    g([55,75,57]); doc.setFontSize(7); doc.setFont('helvetica','normal');
+    doc.text('ComplianceAI  |  ESG-Bericht 2026  |  '+company, M, H-3.5);
+    doc.text('Seite '+i+' / '+pages+'  |  '+new Date().toLocaleDateString('de-DE'), W-M, H-3.5, {align:'right'});
+  }
+
+  doc.save('ESG-Bericht_'+company.replace(/\s+/g,'_')+'_2026.pdf');
+  toast('PDF wird heruntergeladen...');
+}
+
+// ── SETTINGS ──
+function saveProfil() {
+  const name = document.getElementById('set-name').value;
+  const email = document.getElementById('set-email').value;
+  if(name) { state.user.name=name; document.getElementById('set-name-display').textContent=name; }
+  if(email) { state.user.email=email; document.getElementById('set-email-display').textContent=email; document.getElementById('user-label').textContent=email; }
+  toast('✅ Profil gespeichert');
+}
+
+// ── API KEY ──
+let pendingReport = false;
+function showApiModal(pending=false) {
+  pendingReport = pending;
+  document.getElementById('apiModal').style.display='flex';
+  document.getElementById('apiKeyInput').value=state.apiKey||'';
+}
+function saveApiKey() {
+  const v = document.getElementById('apiKeyInput').value.trim();
+  if(!v.startsWith('sk-ant-')) { alert('Bitte gültigen Anthropic API-Key eingeben (beginnt mit sk-ant-)'); return; }
+  state.apiKey = v;
+  localStorage.setItem('cai_apikey', v);
+  document.getElementById('apiModal').style.display = 'none';
+  if (pendingReport) generateReport();
+  else toast('✅ API-Key gespeichert');
+}
+document.getElementById('apiModal').addEventListener('click', e => { if (e.target.id === 'apiModal') e.target.style.display = 'none'; });
+document.getElementById('stripeModal').addEventListener('click', e => { if (e.target.id === 'stripeModal') e.target.style.display = 'none'; });
+
+// ── TOAST ──
+function toast(msg) {
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 3800);
+}
+
+// ── INIT ──
+// Restore API key from localStorage
+const savedKey = localStorage.getItem('cai_apikey');
+if (savedKey) state.apiKey = savedKey;
+
+// Beim ersten Besuch API-Key abfragen
+if (!state.apiKey) {
+  setTimeout(() => showApiModal(false), 800);
+}
+
+</script>
+</body>
+</html>
